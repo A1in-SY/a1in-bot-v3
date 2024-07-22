@@ -122,8 +122,8 @@ func (mp *MagicPen) handle(e *event.Event, cmd *DrawCommand) {
 			"支持的可选项有:\n"+
 			"-help 查看帮助\n"+
 			"-ratio 设置长宽比，有16:9 1:1 21:9 2:3 3:2 4:5 5:4 9:16 9:21可选，默认为16:9\n"+
-			"-model 选择模型，有sd3-large sd3-large-turbo sd3-medium可选，默认为sd3-large"+
-			"-out 输出格式，有jpeg png，默认为png"+
+			"-model 选择模型，有sd3-large sd3-large-turbo sd3-medium可选，默认为sd3-large\n"+
+			"-out 输出格式，有jpeg png，默认为png\n"+
 			"-negative 负面提示词"))
 		mp.bus.Send(msg)
 		return
