@@ -1,0 +1,41 @@
+[LogConf]
+Level = "debug"
+FileName = "bot.log"
+MaxSize = 200
+MaxAge = 0
+MaxBackups = 0
+IsStdout = true
+IsStackTrace = true
+
+[EnvConf]
+GroupIdEnv = "BOT_GROUP_ID"
+StabilityAPISk = "SB_API_SK"
+
+[QQConf]
+WsAddr = "127.0.0.1:3001"
+RetryTimes = 2
+RetryInterval = "1s"
+
+[RedisConf]
+Addr = "127.0.0.1:6379"
+Password = ""
+DB = 0
+
+[BusConf]
+RetryInterval = "1s"
+
+[SMSFFConf]
+ListenAddr = "0.0.0.0:12345"
+
+[MikanConf]
+UseProxy = true
+ProxyAddr = "http://127.0.0.1:7890"
+Timeout = "5s"
+RSSInterval = "15m"
+LinkPerPage = 5
+
+[MagicPenConf]
+UseProxy = true
+ProxyAddr = "http://127.0.0.1:7890"
+Timeout = "15s"
+PicStoragePath = "draw/"
