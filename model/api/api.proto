@@ -1,0 +1,32 @@
+syntax = "proto3";
+package model;
+option go_package = "a1in-bot-v3/model/api";
+
+import "model/segment/segment.proto";
+
+message APIRequest {
+  string action = 1;
+  APIRequestParams params = 2;
+  string echo = 3;
+}
+
+message APIRequestParams {
+  int64 user_id = 1;
+  int64 group_id = 2;
+  repeated Segment message = 3;
+  bool auto_escape = 4;
+  string file = 5;
+  string name = 6;
+  string folder = 7;
+}
+
+message APIResponse {
+  string status = 996;
+  int64 retcode = 997;
+  APIResponseData data = 998;
+  string echo = 999;
+}
+
+message APIResponseData {
+  
+}

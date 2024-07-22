@@ -1,0 +1,9 @@
+.idea
+
+*.log
+
+cmd/cmd
+
+bot.toml
+
+cmd/draw

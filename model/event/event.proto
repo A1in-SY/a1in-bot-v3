@@ -1,0 +1,158 @@
+syntax = "proto3";
+package model;
+option go_package = "a1in-bot-v3/model/event";
+
+import "model/segment/segment.proto";
+import "model/api/api.proto";
+
+// See https://github.com/botuniverse/onebot-11/blob/master/event/README.md
+message QQEvent {
+  // 事件发生的时间戳
+  int64 time = 1;
+  // 收到事件的机器人 QQ 号
+  int64 self_id = 2;
+  // 上报类型，可能的值为 message、
+  string post_type = 3;
+
+  /* ---- message event start ---- */
+
+  // 消息类型， 可能的值为 private、group
+  string message_type = 4;
+  // 消息子类型
+  // 在 message_type 取 private 时，如果是好友则是 friend，如果是群临时会话则是
+  // group 在 message_type 取 group 时，正常消息是 normal，匿名消息是
+  // anonymous，系统提示（如「管理员已禁止群内匿名聊天」）是 notice
+  string sub_type = 5;
+  // 消息 ID
+  int64 message_id = 6;
+  // 群号
+  // 仅当 message_type 取 group 时有效
+  int64 group_id = 7;
+  // 发送者 QQ 号
+  int64 user_id = 8;
+  // 匿名信息，如果不是匿名消息则为 null
+  // 仅当 message_type 取 group 时有效
+  Anonymous anonymous = 9;
+  // 消息内容
+  repeated Segment message = 10;
+  // 原始消息内容
+  string raw_message = 11;
+  // 字体
+  int64 font = 12;
+  // 发送人信息，各字段尽最大努力提供
+  Sender sender = 13;
+  message Sender {
+    // 发送者 QQ 号
+    int64 user_id = 1;
+    // 昵称
+    string nickname = 2;
+    // 性别，male 或 female 或 unknown
+    int64 sex = 3;
+    // 年龄
+    int64 age = 4;
+    // 群名片／备注
+    // 仅当 message_type 取 group 时有效
+    string card = 5;
+    // 地区
+    // 仅当 message_type 取 group 时有效
+    string area = 6;
+    // 成员等级
+    // 仅当 message_type 取 group 时有效
+    string level = 7;
+    // 角色，owner 或 admin 或 member
+    // 仅当 message_type 取 group 时有效
+    string role = 8;
+    // 专属头衔
+    // 仅当 message_type 取 group 时有效
+    string title = 9;
+  }
+  message Anonymous {
+    // 匿名用户 ID
+    int64 id = 1;
+    // 匿名用户名称
+    string name = 2;
+    // 匿名用户 flag，在调用禁言 API 时需要传入
+    string flag = 3;
+  }
+
+  /* ---- message event end ---- */
+
+  /* ---- response start ---- */
+
+  string status = 996;
+  int64 retcode = 997;
+  APIResponseData data = 998;
+  string echo = 999;
+
+  /* ---- response end ---- */
+}
+
+enum EventId {
+  /* ---- message event ---- */
+  MessageEventAll = 0;
+  MessageEventPrivateMessage = 1;
+  MessageEventGroupMessage = 2;
+  /* ---- notice event ---- */
+  NoticeEventAll = 100;
+}
+
+message Event {
+  EventId event_id = 1;
+  int64 time = 2;
+  int64 self_id = 3;
+  string post_type = 4;
+  oneof EventData {
+    /* ---- message event ---- */
+    GroupMessageEvent group_msg = 5;
+    PrivateMessageEvent private_msg = 6;
+
+    /* ---- ---- */
+  }
+}
+
+message GroupMessageEvent {
+  string message_type = 1;
+  string sub_type = 2;
+  int64 message_id = 3;
+  int64 group_id = 4;
+  int64 user_id = 5;
+  Anonymous anonymous = 6;
+  repeated Segment message = 7;
+  string raw_message = 8;
+  int64 font = 9;
+  Sender sender = 10;
+  message Sender {
+    int64 user_id = 1;
+    string nickname = 2;
+    int64 sex = 3;
+    int64 age = 4;
+    string card = 5;
+    string area = 6;
+    string level = 7;
+    string role = 8;
+    string title = 9;
+  }
+  message Anonymous {
+    int64 id = 1;
+    string name = 2;
+    string flag = 3;
+  }
+}
+
+message PrivateMessageEvent {
+  string message_type = 1;
+  string sub_type = 2;
+  int64 message_id = 3;
+  int64 user_id = 4;
+  repeated Segment message = 5;
+  string raw_message = 6;
+  int64 font = 7;
+  Sender sender = 8;
+  message Sender {
+    int64 user_id = 1;
+    string nickname = 2;
+    int64 sex = 3;
+    int64 age = 4;
+  }
+}
+
