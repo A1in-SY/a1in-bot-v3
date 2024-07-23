@@ -176,7 +176,7 @@ func (mp *MagicPen) handle(e *event.Event, cmd *DrawCommand) {
 			mp.bus.Send(msg)
 			return
 		}
-		msg = api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildImageSegment(fmt.Sprintf("file://%v", picPath)))
+		msg = api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf(" 你要的 %v 图", cmd.Prompt)), segment.BuildImageSegment(fmt.Sprintf("file://%v", picPath)))
 		mp.bus.Send(msg)
 		return
 	}
