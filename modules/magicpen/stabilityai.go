@@ -10,9 +10,11 @@ import (
 )
 
 type StabilityAIResult struct {
-	Image        string `json:"image"`
-	FinishReason string `json:"finish_reason"`
-	Seed         int64  `json:"seed"`
+	Image        string   `json:"image"`
+	FinishReason string   `json:"finish_reason"`
+	Seed         int64    `json:"seed"`
+	Name         string   `json:"name"`
+	Errors       []string `json:"errors"`
 }
 
 func (mp *MagicPen) draw(cmd *DrawCommand) (res *StabilityAIResult, err error) {
@@ -41,6 +43,9 @@ func (mp *MagicPen) draw(cmd *DrawCommand) (res *StabilityAIResult, err error) {
 	err = json.Unmarshal(data, res)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("err name: %v, errors: %v", res.Name, res.Errors)
 	}
 	return
 }
