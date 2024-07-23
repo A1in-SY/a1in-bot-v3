@@ -40,5 +40,9 @@ func (c *DrawCommand) check() (err error) {
 			return
 		}
 	}
+	if c.Prompt == "" {
+		err = fmt.Errorf("empty prompt")
+		return
+	}
 	return
 }
