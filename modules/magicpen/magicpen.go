@@ -98,7 +98,7 @@ func (mp *MagicPen) match(e *event.Event) (isMatch bool, cmd *DrawCommand) {
 		return
 	}
 	cmd = &DrawCommand{}
-	err := cmdparser.Parse(strings.TrimLeft(eventData.GroupMsg.GetMessage()[1].Data.Text, " "), cmd)
+	err := cmdparser.Parse(text, cmd)
 	if err != nil {
 		zap.L().Error("[module][magicpen] parse draw command fail", zap.Error(err))
 		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment(fmt.Sprintf("解析命令 %v 时出错: %v", text, err.Error())))
