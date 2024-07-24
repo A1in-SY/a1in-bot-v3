@@ -11,6 +11,7 @@ import (
 	"a1in-bot-v3/utils/cmdparser"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"math"
 	"net/http"
 	"net/url"
@@ -20,7 +21,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
 type Mikan struct {
@@ -88,8 +88,8 @@ func (mikan *Mikan) Cleanup() (err error) {
 func (mikan *Mikan) loopRead() {
 	for {
 		e := mikan.bus.Read()
-		if mikan.match(e) {
-			mikan.handle(e)
+		if ok, cmd := mikan.match(e); ok {
+			mikan.handle(e, cmd)
 		}
 	}
 }
@@ -114,7 +114,7 @@ type Command struct {
 	Size int
 }
 
-func (mikan *Mikan) match(e *event.Event) (isMatch bool) {
+func (mikan *Mikan) match(e *event.Event) (isMatch bool, cmd *MikanCommand) {
 	if e.GetPostType() != event.PostTypeMessage {
 		return
 	}
@@ -135,7 +135,7 @@ func (mikan *Mikan) match(e *event.Event) (isMatch bool) {
 	if !strings.HasPrefix(text, "#mikan") {
 		return
 	}
-	cmd := &MikanCommand{}
+	cmd = &MikanCommand{}
 	err := cmdparser.Parse(text, cmd)
 	if err != nil {
 		zap.L().Error("[module][mikan] parse file command fail", zap.Error(err))
@@ -147,72 +147,82 @@ func (mikan *Mikan) match(e *event.Event) (isMatch bool) {
 	return
 }
 
-func (mikan *Mikan) handle(e *event.Event) {
+func (mikan *Mikan) handle(e *event.Event, cmd *MikanCommand) {
 	eventData := e.EventData.(*event.Event_GroupMsg)
-	cmd := strings.Split(strings.TrimLeft(eventData.GroupMsg.GetMessage()[1].Data.Text, " "), " ")
 	userId := eventData.GroupMsg.GetUserId()
 	groupId := eventData.GroupMsg.GetGroupId()
-	operation := cmd[1]
-	rssUrl := cmd[2]
 	zap.L().Info("[module][mikan] handle", zap.Any("event", e))
-	if operation == "bind" {
-		isExist, err := mikan.isMikanUserExist(userId)
+	if cmd.Help {
+		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("mikan命令格式: mikan [options] url\n"+
+			"支持的可选项有:\n"+
+			"-help 查看帮助\n"+
+			"-bind 设置绑定的Mikan RSS源\n"+
+			"-unbind 取消之前绑定的Mikan RSS源，不需要携带参数（还没做）"))
+		mikan.bus.Send(msg)
+		return
+	} else {
+		err := cmd.CheckCommand()
 		if err != nil {
-			zap.L().Error("[module][mikan] check exist mikan user fail", zap.Int64("userId", userId), zap.Error(err))
-			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("检查历史绑定记录时出错"))
+			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf(" 命令参数不合法: %v", err.Error())))
 			mikan.bus.Send(msg)
 			return
 		}
-		var sub *mikanSubscription
-		var replyText string
-		if isExist {
-			sub, err = mikan.getMikanUserSub(userId)
+		if cmd.Operation == "bind" {
+			isExist, err := mikan.isMikanUserExist(userId)
 			if err != nil {
-				zap.L().Error("[module][mikan] get mikan user sub fail", zap.Int64("userId", userId), zap.Error(err))
+				zap.L().Error("[module][mikan] check exist mikan user fail", zap.Int64("userId", userId), zap.Error(err))
 				msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("检查历史绑定记录时出错"))
 				mikan.bus.Send(msg)
 				return
 			}
-			sub.GroupId = groupId
-			sub.RssUrl = rssUrl
-			replyText = fmt.Sprintf(" 之前已绑定过 MikanRSS 源: %v，已更换为指定源", sub.RssUrl)
-		} else {
-			sub = &mikanSubscription{
-				GroupId: groupId,
-				UserId:  userId,
-				RssUrl:  rssUrl,
-				Read: map[string]int64{
-					"init": time.Now().Unix(),
-				},
+			var sub *mikanSubscription
+			var replyText string
+			if isExist {
+				sub, err = mikan.getMikanUserSub(userId)
+				if err != nil {
+					zap.L().Error("[module][mikan] get mikan user sub fail", zap.Int64("userId", userId), zap.Error(err))
+					msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("检查历史绑定记录时出错"))
+					mikan.bus.Send(msg)
+					return
+				}
+				sub.GroupId = groupId
+				sub.RssUrl = cmd.Param
+				replyText = fmt.Sprintf(" 之前已绑定过 MikanRSS 源: %v，已更换为指定源", sub.RssUrl)
+			} else {
+				sub = &mikanSubscription{
+					GroupId: groupId,
+					UserId:  userId,
+					RssUrl:  cmd.Param,
+					Read: map[string]int64{
+						"init": time.Now().Unix(),
+					},
+				}
+				replyText = " 成功绑定 MikanRSS 源"
 			}
-			replyText = " 成功绑定 MikanRSS 源"
-		}
-		eg := &errgroup.Group{}
-		eg.Go(func() error {
-			return mikan.setMikanUserSub(userId, sub)
-		})
-		eg.Go(func() error {
-			return mikan.addMikanUserList(userId)
-		})
-		err = eg.Wait()
-		if err != nil {
-			zap.L().Error("[module][mikan] set mikan user sub fail", zap.Int64("userId", userId), zap.Error(err))
-			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("绑定 MikanRSS 源时出错"))
+			eg := &errgroup.Group{}
+			eg.Go(func() error {
+				return mikan.setMikanUserSub(userId, sub)
+			})
+			eg.Go(func() error {
+				return mikan.addMikanUserList(userId)
+			})
+			err = eg.Wait()
+			if err != nil {
+				zap.L().Error("[module][mikan] set mikan user sub fail", zap.Int64("userId", userId), zap.Error(err))
+				msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("绑定 MikanRSS 源时出错"))
+				mikan.bus.Send(msg)
+				return
+			}
+			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(replyText))
 			mikan.bus.Send(msg)
-			return
+			go func() {
+				time.Sleep(3 * time.Second)
+				mikan.userSub(userId)
+			}()
+		} else if cmd.Operation == "unbind" {
+			// TODO
+			zap.L().Error("[module][mikan] unbind")
 		}
-		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(replyText))
-		mikan.bus.Send(msg)
-		go func() {
-			time.Sleep(3 * time.Second)
-			mikan.userSub(userId)
-		}()
-	} else if operation == "unbind" {
-		// TODO
-		zap.L().Error("[module][mikan] unbind")
-	} else {
-		// TODO
-		zap.L().Error("[module][mikan] unknown")
 	}
 }
 

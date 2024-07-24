@@ -7,7 +7,7 @@ import (
 type FileCommand struct {
 	Help      bool   `cmd:"help"`
 	Operation string `cmd:"required0"`
-	Param     string `cmd:"required1"`
+	Path      string `cmd:"required1"`
 }
 
 func (c *FileCommand) CheckCommand() (err error) {
@@ -20,7 +20,7 @@ func (c *FileCommand) CheckCommand() (err error) {
 			return
 		}
 	}
-	if c.Param == "" {
+	if c.Path == "" {
 		err = fmt.Errorf("empty param")
 		return
 	}
