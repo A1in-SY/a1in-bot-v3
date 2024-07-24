@@ -7,6 +7,7 @@ import (
 	"a1in-bot-v3/infrastructure/redis"
 	"a1in-bot-v3/log"
 	"a1in-bot-v3/modules"
+	"a1in-bot-v3/modules/chat"
 	"a1in-bot-v3/modules/filewatcher"
 	"a1in-bot-v3/modules/magicpen"
 	"a1in-bot-v3/modules/mikan"
@@ -80,7 +81,7 @@ func main() {
 	zap.L().Info("utils init successfully.")
 
 	// Init Module
-	modules := []modules.Module{&smsff.SMSFF{}, &mikan.Mikan{}, &filewatcher.FileWatcher{}, &magicpen.MagicPen{}}
+	modules := []modules.Module{&smsff.SMSFF{}, &mikan.Mikan{}, &filewatcher.FileWatcher{}, &magicpen.MagicPen{}, &chat.Chat{}}
 	for _, module := range modules {
 		module := module
 		eg.Go(func() error {

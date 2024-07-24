@@ -89,7 +89,7 @@ func (w *FileWatcher) handle(e *event.Event, cmd *FileCommand) {
 	groupId := eventData.GroupMsg.GetGroupId()
 	zap.L().Info("[module][filewatch] handle", zap.Any("event", e))
 	if cmd.Help {
-		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("file命令格式: draw [options] path\n"+
+		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("file命令格式: file [options] path\n"+
 			"支持的可选项有:\n"+
 			"-help 查看帮助\n"+
 			"-ls 列出path下的文件和文件夹\n"+

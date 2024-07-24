@@ -16,6 +16,7 @@ type Env struct {
 	conf           *conf.EnvConfig
 	GroupId        int64
 	StabilityAPISk string
+	MoonshotAPIKey string
 }
 
 func (e *Env) InitInfra(cbs []byte) (err error) {
@@ -35,6 +36,7 @@ func (e *Env) InitInfra(cbs []byte) (err error) {
 	}
 	e.conf = c.EnvConf
 	zap.L().Debug("[infra][env] init with conf", zap.Any("", *e.conf))
+
 	gEnv := os.Getenv(e.conf.GroupIdEnv)
 	if gEnv == "" {
 		err = fmt.Errorf("can't find %v in system env, plz check", e.conf.GroupIdEnv)
@@ -44,12 +46,21 @@ func (e *Env) InitInfra(cbs []byte) (err error) {
 	if err != nil {
 		return
 	}
-	sk := os.Getenv(e.conf.StabilityAPISk)
+
+	sk := os.Getenv(e.conf.StabilityAPISkEnv)
 	if sk == "" {
-		err = fmt.Errorf("can't find %v in system env, plz check", e.conf.StabilityAPISk)
+		err = fmt.Errorf("can't find %v in system env, plz check", e.conf.StabilityAPISkEnv)
 		return
 	}
 	e.StabilityAPISk = sk
+
+	mskey := os.Getenv(e.conf.MoonshotAPIKeyEnv)
+	if sk == "" {
+		err = fmt.Errorf("can't find %v in system env, plz check", e.conf.MoonshotAPIKeyEnv)
+		return
+	}
+	e.MoonshotAPIKey = mskey
+
 	env = e
 	zap.L().Info("[infra][env] init successfully")
 	return
@@ -61,4 +72,8 @@ func GetGroupId() int64 {
 
 func GetStabilityAPISk() string {
 	return env.StabilityAPISk
+}
+
+func GetMoonshotAPIKey() string {
+	return env.MoonshotAPIKey
 }
