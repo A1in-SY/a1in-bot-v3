@@ -8,6 +8,7 @@ import (
 	"a1in-bot-v3/model/segment"
 	"a1in-bot-v3/modules/mikan/conf"
 	"a1in-bot-v3/utils/bus"
+	"a1in-bot-v3/utils/cmdparser"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -118,29 +119,28 @@ func (mikan *Mikan) match(e *event.Event) (isMatch bool) {
 		return
 	}
 	eventData, ok := e.EventData.(*event.Event_GroupMsg)
+	groupId := eventData.GroupMsg.GetGroupId()
 	if !ok {
 		return
 	}
-	// at和文本
-	if len(eventData.GroupMsg.GetMessage()) != 2 {
+	// 文本
+	if len(eventData.GroupMsg.GetMessage()) != 1 {
 		return
 	}
-	if eventData.GroupMsg.GetMessage()[0].Type != segment.SegmentTypeAt {
+	if eventData.GroupMsg.GetMessage()[0].Type != segment.SegmentTypeText {
 		return
 	}
-	// at机器人
-	if eventData.GroupMsg.GetMessage()[0].Data.Qq != strconv.FormatInt(e.SelfId, 10) {
-		return
-	}
-	if eventData.GroupMsg.GetMessage()[1].Type != segment.SegmentTypeText {
-		return
-	}
+	text := strings.TrimSpace(eventData.GroupMsg.GetMessage()[0].Data.Text)
 	// 文本开头为指定字符串
-	if strings.Split(strings.TrimLeft(eventData.GroupMsg.GetMessage()[1].Data.Text, " "), " ")[0] != "mikan" {
+	if !strings.HasPrefix(text, "#mikan") {
 		return
 	}
-	// 命令段数
-	if len(strings.Split(strings.TrimLeft(eventData.GroupMsg.GetMessage()[1].Data.Text, " "), " ")) != 3 {
+	cmd := &MikanCommand{}
+	err := cmdparser.Parse(text, cmd)
+	if err != nil {
+		zap.L().Error("[module][mikan] parse file command fail", zap.Error(err))
+		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment(fmt.Sprintf("解析命令 %v 时出错: %v", text, err.Error())))
+		mikan.bus.Send(msg)
 		return
 	}
 	isMatch = true

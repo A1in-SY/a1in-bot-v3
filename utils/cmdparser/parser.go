@@ -8,11 +8,12 @@ import (
 )
 
 type Command interface {
-	isCommand()
+	CheckCommand() error
 }
 
 // 命令解析，命令形式类似Linux命令，对于解析到bool字段的可选项可以省略value，但不要将该省略项置于可选项最后
 // e.g. "draw -bool_test -r 16:9 -out png girl" ✅ "draw -r 16:9 -out png -bool_test girl"❌
+// TODO 解析bug修复，具体见test
 func Parse(cmd string, target Command) (err error) {
 	fields := strings.Fields(cmd)
 	fm := make(map[string]string)

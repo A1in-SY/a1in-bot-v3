@@ -1,12 +1,10 @@
 package magicpen
 
 import (
-	"a1in-bot-v3/utils/cmdparser"
 	"fmt"
 )
 
 type DrawCommand struct {
-	cmdparser.Command
 	Help     bool   `cmd:"help"`
 	Ratio    string `cmd:"ratio"`
 	Model    string `cmd:"model"`
@@ -15,7 +13,7 @@ type DrawCommand struct {
 	Prompt   string `cmd:"required0"`
 }
 
-func (c *DrawCommand) check() (err error) {
+func (c *DrawCommand) CheckCommand() (err error) {
 	if c.Ratio == "" {
 		c.Ratio = "16:9"
 	} else {

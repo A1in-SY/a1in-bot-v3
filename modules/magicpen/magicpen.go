@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -81,31 +80,29 @@ func (mp *MagicPen) Cleanup() (err error) {
 
 func (mp *MagicPen) match(e *event.Event) (isMatch bool, cmd *DrawCommand) {
 	eventData, ok := e.EventData.(*event.Event_GroupMsg)
+	groupId := eventData.GroupMsg.GetGroupId()
 	if !ok {
 		return
 	}
 	// at和文本
-	if len(eventData.GroupMsg.GetMessage()) != 2 {
+	// 文本
+	if len(eventData.GroupMsg.GetMessage()) != 1 {
 		return
 	}
-	if eventData.GroupMsg.GetMessage()[0].Type != segment.SegmentTypeAt {
+	if eventData.GroupMsg.GetMessage()[0].Type != segment.SegmentTypeText {
 		return
 	}
-	// at机器人
-	if eventData.GroupMsg.GetMessage()[0].Data.Qq != strconv.FormatInt(e.SelfId, 10) {
-		return
-	}
-	if eventData.GroupMsg.GetMessage()[1].Type != segment.SegmentTypeText {
-		return
-	}
+	text := strings.TrimSpace(eventData.GroupMsg.GetMessage()[0].Data.Text)
 	// 文本开头为指定字符串
-	if strings.Split(strings.TrimLeft(eventData.GroupMsg.GetMessage()[1].Data.Text, " "), " ")[0] != "draw" {
+	if !strings.HasPrefix(text, "#draw") {
 		return
 	}
 	cmd = &DrawCommand{}
 	err := cmdparser.Parse(strings.TrimLeft(eventData.GroupMsg.GetMessage()[1].Data.Text, " "), cmd)
 	if err != nil {
 		zap.L().Error("[module][magicpen] parse draw command fail", zap.Error(err))
+		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment(fmt.Sprintf("解析命令 %v 时出错: %v", text, err.Error())))
+		mp.bus.Send(msg)
 		return
 	}
 	isMatch = true
@@ -128,7 +125,7 @@ func (mp *MagicPen) handle(e *event.Event, cmd *DrawCommand) {
 		mp.bus.Send(msg)
 		return
 	} else {
-		err := cmd.check()
+		err := cmd.CheckCommand()
 		if err != nil {
 			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf(" 命令参数不合法: %v", err.Error())))
 			mp.bus.Send(msg)
