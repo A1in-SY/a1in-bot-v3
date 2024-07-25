@@ -29,7 +29,7 @@ func DefaultConf() *config {
 			APIKey:    "",
 			UseProxy:  false,
 			ProxyAddr: "http://127.0.0.1:7890",
-			Timeout:   5 * time.Second,
+			Timeout:   15 * time.Second,
 		},
 	}
 }
