@@ -11,7 +11,7 @@ type config struct {
 type EnvConfig struct {
 	GroupIdEnv        string
 	StabilityAPISkEnv string
-	MoonshotAPIKeyEnv string
+	ChatAPIKeyEnv     string
 }
 
 func (c *config) Check() (err error) {
@@ -26,7 +26,7 @@ func DefaultConf() *config {
 		EnvConf: &EnvConfig{
 			GroupIdEnv:        "BOT_GROUP_ID",
 			StabilityAPISkEnv: "SB_API_SK",
-			MoonshotAPIKeyEnv: "MOONSHOT_API_KEY",
+			ChatAPIKeyEnv:     "CHAT_API_KEY",
 		},
 	}
 }

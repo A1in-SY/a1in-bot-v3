@@ -16,7 +16,7 @@ type Env struct {
 	conf           *conf.EnvConfig
 	GroupId        int64
 	StabilityAPISk string
-	MoonshotAPIKey string
+	ChatAPIKey     string
 }
 
 func (e *Env) InitInfra(cbs []byte) (err error) {
@@ -54,12 +54,12 @@ func (e *Env) InitInfra(cbs []byte) (err error) {
 	}
 	e.StabilityAPISk = sk
 
-	mskey := os.Getenv(e.conf.MoonshotAPIKeyEnv)
+	chatKey := os.Getenv(e.conf.ChatAPIKeyEnv)
 	if sk == "" {
-		err = fmt.Errorf("can't find %v in system env, plz check", e.conf.MoonshotAPIKeyEnv)
+		err = fmt.Errorf("can't find %v in system env, plz check", e.conf.ChatAPIKeyEnv)
 		return
 	}
-	e.MoonshotAPIKey = mskey
+	e.ChatAPIKey = chatKey
 
 	env = e
 	zap.L().Info("[infra][env] init successfully")
@@ -74,6 +74,6 @@ func GetStabilityAPISk() string {
 	return env.StabilityAPISk
 }
 
-func GetMoonshotAPIKey() string {
-	return env.MoonshotAPIKey
+func GetChatAPIKey() string {
+	return env.ChatAPIKey
 }

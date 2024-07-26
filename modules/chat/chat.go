@@ -38,7 +38,7 @@ func (chat *Chat) InitModule(cbs []byte) (err error) {
 		return
 	}
 	chat.conf = c.ChatConf
-	chat.conf.APIKey = env.GetMoonshotAPIKey()
+	chat.conf.APIKey = env.GetChatAPIKey()
 	chat.bus = bus.GetBus().GenBusChan(event.EventId_MessageEventGroupMessage)
 	if chat.conf.UseProxy {
 		pu, err := url.Parse(chat.conf.ProxyAddr)
@@ -112,7 +112,8 @@ func (chat *Chat) handle(e *event.Event, cmd *ChatCommand) {
 	if cmd.Help {
 		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildTextSegment("chat命令格式: chat content\n"+
 			"支持的可选项有:\n"+
-			"-help 查看帮助"))
+			"-help 查看帮助\n"+
+			"感谢安总的支持"))
 		chat.bus.Send(msg)
 		return
 	} else {
@@ -125,13 +126,13 @@ func (chat *Chat) handle(e *event.Event, cmd *ChatCommand) {
 		res, err := chat.chat(cmd)
 		if err != nil {
 			zap.L().Error("[module][chat] chat fail", zap.Int64("userId", userId), zap.Error(err))
-			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf(" 调用Moonshot API失败， 错误: %v", err.Error())))
+			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf(" 调用API失败，错误: %v", err.Error())))
 			chat.bus.Send(msg)
 			return
 		}
 		if len(res.Choices) == 0 {
 			zap.L().Error("[module][chat] empty result", zap.Int64("userId", userId), zap.Error(err))
-			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(" 调用Moonshot API返回结果为空"))
+			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(" 调用API返回结果为空"))
 			chat.bus.Send(msg)
 			return
 		}

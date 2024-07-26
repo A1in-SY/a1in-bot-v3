@@ -3,15 +3,16 @@ package chat
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 )
 
-type MoonshotChatReq struct {
-	Model       string
-	Messages    []Message
-	Temperature float64
+type ChatReq struct {
+	Model       string    `json:"model,omitempty"`
+	Messages    []Message `json:"messages,omitempty"`
+	Temperature float64   `json:"temperature,omitempty"`
+	TopP        float64   `json:"top_p,omitempty"`
+	MaxTokens   int64     `json:"max_tokens"`
 }
 
 type Message struct {
@@ -19,7 +20,7 @@ type Message struct {
 	Content string
 }
 
-type MoonshotChatResp struct {
+type ChatResp struct {
 	Id      string
 	Object  string
 	Created int64
@@ -40,19 +41,23 @@ type Usage struct {
 	TotalTokens      int64 `json:"total_tokens"`
 }
 
-func (chat *Chat) chat(cmd *ChatCommand) (res *MoonshotChatResp, err error) {
-	chatReq := &MoonshotChatReq{
-		Model:       "moonshot-v1-8k",
-		Messages:    []Message{{Role: "user", Content: cmd.Content}},
-		Temperature: 0.3,
+func (chat *Chat) chat(cmd *ChatCommand) (res *ChatResp, err error) {
+	chatReq := &ChatReq{
+		Messages: []Message{
+			{Role: "system", Content: "You are an AI assistant that helps people find information."},
+			{Role: "user", Content: cmd.Content},
+		},
+		Temperature: 0.7,
+		TopP:        0.95,
+		MaxTokens:   800,
 	}
 	data, err := json.Marshal(chatReq)
 	if err != nil {
 		return
 	}
-	req, _ := http.NewRequest(http.MethodPost, "https://api.moonshot.cn/v1/chat/completions", bytes.NewReader(data))
+	req, _ := http.NewRequest(http.MethodPost, "https://cybever-openai.openai.azure.com/openai/deployments/hty/chat/completions?api-version=2024-02-15-preview", bytes.NewReader(data))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("authorization", fmt.Sprintf("Bearer %v", chat.conf.APIKey))
+	req.Header.Set("api-key", chat.conf.APIKey)
 	resp, err := chat.httpCli.Do(req)
 	if err != nil {
 		return nil, err
@@ -62,7 +67,7 @@ func (chat *Chat) chat(cmd *ChatCommand) (res *MoonshotChatResp, err error) {
 	if err != nil {
 		return nil, err
 	}
-	res = &MoonshotChatResp{}
+	res = &ChatResp{}
 	err = json.Unmarshal(body, res)
 	if err != nil {
 		return nil, err
