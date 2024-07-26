@@ -131,7 +131,7 @@ func (chat *Chat) handle(e *event.Event, cmd *ChatCommand) {
 			return
 		}
 		if len(res.Choices) == 0 {
-			zap.L().Error("[module][chat] empty result", zap.Int64("userId", userId), zap.Error(err))
+			zap.L().Error("[module][chat] empty result", zap.Int64("userId", userId), zap.Any("res", res))
 			msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(" 调用API返回结果为空"))
 			chat.bus.Send(msg)
 			return
