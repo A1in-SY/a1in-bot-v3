@@ -3,6 +3,7 @@ package chat
 import (
 	"bytes"
 	"encoding/json"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 )
@@ -16,23 +17,23 @@ type ChatReq struct {
 }
 
 type Message struct {
-	Role    string
-	Content string
+	Role    string `json:"role,omitempty"`
+	Content string `json:"content,omitempty"`
 }
 
 type ChatResp struct {
-	Id      string
-	Object  string
-	Created int64
-	Model   string
-	Choices []Choice
-	Usage   Usage
+	Id      string   `json:"id,omitempty"`
+	Object  string   `json:"object,omitempty"`
+	Created int64    `json:"created,omitempty"`
+	Model   string   `json:"model,omitempty"`
+	Choices []Choice `json:"choices,omitempty"`
+	Usage   Usage    `json:"usage"`
 }
 
 type Choice struct {
-	Index        int64
-	Message      Message
-	FinishReason string `json:"finish_reason"`
+	Index        int64   `json:"index,omitempty"`
+	Message      Message `json:"message"`
+	FinishReason string  `json:"finish_reason,omitempty"`
 }
 
 type Usage struct {
@@ -58,12 +59,14 @@ func (chat *Chat) chat(cmd *ChatCommand) (res *ChatResp, err error) {
 	req, _ := http.NewRequest(http.MethodPost, "https://cybever-openai.openai.azure.com/openai/deployments/hty/chat/completions?api-version=2024-02-15-preview", bytes.NewReader(data))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("api-key", chat.conf.APIKey)
+	zap.L().Debug("[module][chat] will do", zap.Any("req", req))
 	resp, err := chat.httpCli.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
+	zap.L().Debug("[module][chat] read resp", zap.String("body", string(body)))
 	if err != nil {
 		return nil, err
 	}

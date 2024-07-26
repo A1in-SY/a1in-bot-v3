@@ -136,7 +136,6 @@ func (chat *Chat) handle(e *event.Event, cmd *ChatCommand) {
 			chat.bus.Send(msg)
 			return
 		}
-		zap.L().Info("[module][chat] success", zap.Any("result", res))
 		msg := api.BuildSendGroupMsgRequest("", groupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(res.Choices[0].Message.Content))
 		chat.bus.Send(msg)
 		return
