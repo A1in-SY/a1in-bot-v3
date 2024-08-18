@@ -8,6 +8,6 @@
 
 * [X] command解析器
 * [X] 接入stability.ai
-* [ ] 接入GPTapi
+* [X] 接入GPTapi
 * [ ] 人生游戏（？）
 * [ ] 其他好玩的...
