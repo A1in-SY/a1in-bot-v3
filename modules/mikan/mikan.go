@@ -11,13 +11,14 @@ import (
 	"a1in-bot-v3/utils/cmdparser"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"math"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/BurntSushi/toml"
 	"go.uber.org/zap"
@@ -243,8 +244,8 @@ func (mikan *Mikan) userSub(userId int64) {
 	feed, err := mikan.getRSSFeed(sub.RssUrl)
 	if err != nil {
 		zap.L().Error("[module][mikan] get mikan rss feed fail", zap.Int64("userId", userId), zap.Error(err))
-		msg := api.BuildSendGroupMsgRequest("", sub.GroupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf("从指定源获取更新失败， 错误: %v", err.Error())))
-		mikan.bus.Send(msg)
+		// msg := api.BuildSendGroupMsgRequest("", sub.GroupId, segment.BuildAtSegment(fmt.Sprint(userId)), segment.BuildTextSegment(fmt.Sprintf("从指定源获取更新失败， 错误: %v", err.Error())))
+		// mikan.bus.Send(msg)
 		return
 	}
 	linkArr := []string{}
